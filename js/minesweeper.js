@@ -132,7 +132,7 @@ function flagSquare(index) {
     buttons[index].msg = "F";
 }
 function revealSurroundings(index, exceptions) {
-    if (IS_SOLVING) {
+    if (IS_SOLVING && (exceptions === undefined || excetions === [])) {
         unfilledPositions.splice(unfilledPositions.findIndex(e => getIndexFromPosition(e) === index), 1);
     }
     var pos = getPositionFromIndex(index);
@@ -167,8 +167,6 @@ function revealSquare(index) {
                 if (!revealedSquares[getStr(adj)]) {
                     queue.push(adj);
                     revealedSquares[getStr(adj)] = true;
-                    if (IS_SOLVING) {
-                    }
                 }
             }
         }
