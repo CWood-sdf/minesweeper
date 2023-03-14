@@ -16,7 +16,7 @@ function generateBoard(baseIndex) {
             userViewBoard[x].push(-2);
         }
     }
-    console.log(board);
+    // console.log(board);
     //The probablilty that the square won't be a flag
     var chance = 1.3;
     var position = getPositionFromIndex(baseIndex);
@@ -24,8 +24,8 @@ function generateBoard(baseIndex) {
     var positionsFilled = {};
     positionsFilled[getStr(position)] = true;
     var currentPositions = [position];
-    console.log(currentPositions);
-    console.log(board);
+    // console.log(currentPositions);
+    // console.log(board);
     while(Math.random() < chance){
         chance *= 0.7;
         var l = currentPositions.length;
@@ -43,14 +43,14 @@ function generateBoard(baseIndex) {
             }
         }
         var inc = currentPositions.length - l;
-        console.log(l, currentPositions.length, inc);
+        // console.log(l, currentPositions.length, inc);
     }
     
     for(var pos of currentPositions){
         board[pos.x][pos.y] = 0;
     }
-    console.log(currentPositions);
-    console.log(board);
+    // console.log(currentPositions);
+    // console.log(board);
     for(var flags = 350; flags >= 0; flags--){
         var pos;
         var allFilled = false;
@@ -114,6 +114,10 @@ function getIndexFromPosition(position) {
 }
 function setButtonAndUserView(el) {
     userViewBoard[el.x][el.y] = board[el.x][el.y];
+    if (board[el.x][el.y] === -1) {
+        debugger;
+        throw "eggleflebb";
+    }
     if(board[el.x][el.y] === 0){
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].msg = "";
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].inner = p.color(150);
@@ -127,29 +131,18 @@ function flagSquare(index) {
     userViewBoard[position.x][position.y] = -1;
     buttons[index].msg = "F";
 }
-function revealSurroundings(index) {
+function revealSurroundings(index, exceptions) {
     if (IS_SOLVING) {
         unfilledPositions.splice(unfilledPositions.findIndex(e => getIndexFromPosition(e) === index), 1);
     }
     var pos = getPositionFromIndex(index);
     var adjs = getAllAdjacentPositions(pos);
     var count = userViewBoard[pos.x][pos.y] - getAdjacentUserFlagCount(index);
-    if (count === 0) {
-        for (const adj of adjs) {
-            if (!revealedSquares[getStr(adj)]) {
-                revealSquare(getIndexFromPosition(adj));
-            }
+    if (count === 0 || exceptions !== undefined) {
+        // exceptions = exceptions ?? [];
+        if (exceptions === undefined) {
+            exceptions = [];
         }
-    }
-}
-function revealSurroundingsExcept(index, exceptions) {
-    if (IS_SOLVING) {
-        unfilledPositions.splice(unfilledPositions.findIndex(e => getIndexFromPosition(e) === index), 1);
-    }
-    var pos = getPositionFromIndex(index);
-    var adjs = getAllAdjacentPositions(pos);
-    var count = userViewBoard[pos.x][pos.y] - getAdjacentUserFlagCount(index);
-    if (count === 0) {
         for (const adj of adjs) {
             if (!revealedSquares[getStr(adj)] && exceptions.findIndex(e => getIndexFromPosition(e) === getIndexFromPosition(adj)) === -1) {
                 revealSquare(getIndexFromPosition(adj));
