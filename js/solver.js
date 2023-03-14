@@ -109,6 +109,7 @@ function countAdjacentUnsolvedSquares(position) {
     return ret;
 }
 var msgDone = false;
+var add = Math.floor(Math.random() * 100 - 50);
 function solveBoard() {
     // debugger;
     if (board === undefined || userViewBoard === undefined) {
@@ -120,14 +121,19 @@ function solveBoard() {
     if (userViewBoard === undefined) {
         return;
     }
-    if (unfilledPositions.length !== 0 && n++ % 1 === 0) {
+    if (unfilledPositions.length !== 0 && n++ % (200 + add) === 0) {
+        add = Math.floor(Math.random() * 300 - 50);
         i++;
         i %= unfilledPositions.length;
         var c = unfilledPositions[i];
+        var index = getIndexFromPosition(c);
         if (userViewBoard[c.x][c.y] === 0) {
+            unfilledPositions.splice(unfilledPositions.findIndex(e => getIndexFromPosition(e) === index), 1);
             return;
         }
-        var index = getIndexFromPosition(c);
+        if (checks.indexOf(index) !== -1) {
+            debugger;
+        }
         // debugger;
         var DEBUG_adjs = getAdjacentSquareNumbers(getIndexFromPosition(c));
         if (countAdjacentUnsolvedSquares(c) === 0) {

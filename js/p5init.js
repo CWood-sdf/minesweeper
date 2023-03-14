@@ -28,7 +28,10 @@ const s = pi => {
             btn.draw();
             btn.handlePress();
             var isDone = btn.isDone();
-            if (isDone && p.keyIsPressed && p.key === 'a') {
+            if (isDone && p.keyIsPressed && p.key === 'k') {
+                checks.push(i);
+            }
+            else if (isDone && p.keyIsPressed && p.key === 'a') {
                 console.log(i, unfilledPositions.findIndex(e => getIndexFromPosition(e) === i));
             }
             else if(isDone && p.mouseButton === p.LEFT){
@@ -44,11 +47,11 @@ const s = pi => {
         }
         i++;
         for (var i = 0; i < BOARD_SIZE; i++) {
-            p.fill(p.color(255));
-            p.text(i, 2.5 * height, (i * 100 / BOARD_SIZE + 1.5) * height);
-            if (i !== 0) {
-                p.text(i, (i * 100 / BOARD_SIZE + 2.5) * height, 1.5 * height);
-            }
+            // p.fill(p.color(255));
+            // p.text(i, 2.5 * height, (i * 100 / BOARD_SIZE + 1.5) * height);
+            // if (i !== 0) {
+            //     p.text(i, (i * 100 / BOARD_SIZE + 2.5) * height, 1.5 * height);
+            // }
         }
     };
 };

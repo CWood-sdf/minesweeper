@@ -115,8 +115,9 @@ function getIndexFromPosition(position) {
 function setButtonAndUserView(el) {
     userViewBoard[el.x][el.y] = board[el.x][el.y];
     if (board[el.x][el.y] === -1) {
-        debugger;
-        throw "eggleflebb";
+        console.log("that's an oopsie");
+        // debugger;
+        // throw "eggleflebb";
     }
     if(board[el.x][el.y] === 0){
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].msg = "";
@@ -132,7 +133,7 @@ function flagSquare(index) {
     buttons[index].msg = "F";
 }
 function revealSurroundings(index, exceptions) {
-    if (IS_SOLVING && (exceptions === undefined || excetions === [])) {
+    if (IS_SOLVING && (exceptions === undefined || exceptions === [])) {
         unfilledPositions.splice(unfilledPositions.findIndex(e => getIndexFromPosition(e) === index), 1);
     }
     var pos = getPositionFromIndex(index);
