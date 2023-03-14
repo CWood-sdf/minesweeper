@@ -124,6 +124,7 @@ function setButtonAndUserView(el) {
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].inner = p.color(150);
     } else {
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].msg = board[el.x][el.y];
+        buttons[getIndexFromPosition(p.createVector(el.x, el.y))].inner = p.color(130);
     }
 }
 function flagSquare(index) {
@@ -131,6 +132,7 @@ function flagSquare(index) {
     revealedSquares[getStr(position)] = true;
     userViewBoard[position.x][position.y] = -1;
     buttons[index].msg = "F";
+    buttons[index].inner = p.color(130);
 }
 function revealSurroundings(index, exceptions) {
     if (IS_SOLVING && (exceptions === undefined || exceptions === [])) {
