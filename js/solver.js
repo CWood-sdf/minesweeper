@@ -1,5 +1,6 @@
 var fiftyFifties = [];
 var unfilledPositions = [];
+var checks = [];
 const IS_SOLVING = true;
 //Compiles all the 50-50s into an object that has each position as an indexx
 function getFiftyFiftySquareObject() {
