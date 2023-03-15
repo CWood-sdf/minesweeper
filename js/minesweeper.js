@@ -51,7 +51,7 @@ function generateBoard(baseIndex) {
     }
     // console.log(currentPositions);
     // console.log(board);
-    for(var flags = 350; flags >= 0; flags--){
+    for(var flags = 475; flags >= 0; flags--){
         var pos;
         var allFilled = false;
         do {
