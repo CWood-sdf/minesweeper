@@ -86,6 +86,8 @@ function generateBoard(baseIndex) {
             board[pos.x][pos.y] = c;
         }
     }
+    //inc by 1 because smh off by 1 err
+    flagsLeft++;
 }
 function getAllAdjacentPositions(position){
     var arr = [];
@@ -126,7 +128,7 @@ function setButtonAndUserView(el) {
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].inner = p.color(130);
     }
     if (board[el.x][el.y] === -1) {
-        console.log("that's an oopsie flagging");
+        console.log("that's an oopsie");
         // // debugger;
         // throw "eggleflebb";
     }

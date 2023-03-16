@@ -130,6 +130,8 @@ var sinceOopsie = 0;
 var oopsieIndex = 0;
 var DEBUG_index = 0;
 var flagsLeftMsg = false;
+var flagsLeftTime = 0.5;
+var msg50 = false;
 function solveBoard() {
     // debugger;
     if (board === undefined || userViewBoard === undefined) {
@@ -149,12 +151,142 @@ function solveBoard() {
         getSolvedFlagCount(oopsieIndex);
         getRevealExceptions();
     }
+    if (fiftyFifties.length > flagsLeft) {
+        //Remove all the overlapping fiftyFifties
+        if (!msg50) {
+            console.log("removing 50-50s");
+            console.log(fiftyFifties);
+        }
+        for (var k = fiftyFifties.length - 1; k >= 0; k--){
+            var f = fiftyFifties[k];
+            var remIndex = fiftyFifties.findIndex((v, j) => j !== k && (v.indexOf(f[0]) !== -1 || v.indexOf(f[1]) !== -1));
+            while (remIndex !== -1) {
+                fiftyFifties.splice(remIndex, 1);
+                remIndex = fiftyFifties.findIndex((v, j) => j !== k && (v.indexOf(f[0]) !== -1 || v.indexOf(f[1]) !== -1));
+            }
+            k = fiftyFifties.findIndex(v => v[0] === f[0] && v[1] === f[1]);
+            fiftyFifties.splice(k, 1);
+        }
+        if (!msg50) {
+            console.log(fiftyFifties);
+        }
+        msg50 = true;
+    }
     if (flagsLeft < 10 && !flagsLeftMsg) {
         console.log("yeet");
         flagsLeftMsg = true;
     }
+    if (flagsLeft === 1 && flagsLeftTime === 0.5 && flagsLeftTime !== 0.3) {
+        console.log("Yeeting soon");
+        flagsLeftTime = BOARD_SIZE * BOARD_SIZE * 10;
+    }
+    if (flagsLeftTime !== 0.5 && flagsLeftTime !== 0.3) {
+        flagsLeftTime--;
+    }
+    if (flagsLeftTime < 0 && flagsLeft === 1) {
+        console.log("Brute force check");
+        // debugger;
+        var xStart = BOARD_SIZE;
+        var yStart = BOARD_SIZE;
+        var xEnd = 0;
+        var yEnd = 0;
+        for (var x = 0; x < BOARD_SIZE; x++){
+            for (var y = 0; y < BOARD_SIZE; y++){
+                if (userViewBoard[x][y] === -2) {
+                    //4's a bit much, but whatevs
+                    xStart = x - 4 < xStart ? x - 4 : xStart;
+                    yStart = y - 4 < yStart ? y - 4 : yStart;
+                    xEnd = x + 4 > xEnd ? x + 4 : xEnd;
+                    yEnd = y + 4 > yEnd ? y + 4 : yEnd;
+                }
+            }
+        }
+        var arr = [];
+        if (xStart < 0) {
+            xStart = 0;
+        }
+        if (yStart < 0) {
+            yStart = 0;
+        }
+        if (xEnd >= BOARD_SIZE) {
+            xEnd = BOARD_SIZE;
+        }
+        if (yEnd >= BOARD_SIZE) {
+            yEnd = BOARD_SIZE;
+        }
+        var newBoard = [];
+        for (var x = xStart; x < xEnd; x++){
+            newBoard.push([]);
+            for (var y = yStart; y < yEnd; y++){
+                var val = -3;
+                if (countAdjacentUnsolvedSquares(p.createVector(x, y)) > 0) {
+                    val = userViewBoard[x][y];
+                }
+                else if (userViewBoard[x][y] < 0) {
+                    val = userViewBoard[x][y];
+                } 
+                newBoard[x - xStart].push(val);
+            }
+        }
+        var solved = false;
+        var solvedOn = null;
+        for (var x = 0; x < newBoard.length; x++){
+            for (var y = 0; y < newBoard[x].length; y++){
+                if (newBoard[x][y] === -2) {
+                    newBoard[x][y] = -1;
+                    var exit = false;
+                    for (var x2 = 0; x2 < newBoard.length; x2++) {
+                        for (var y2 = 0; y2 < newBoard[x].length; y2++) {
+                            if (newBoard[x2][y2] > 0) {
+                                var f = 0;
+                                for (var xp = -1; xp <= 1; xp++){
+                                    for (var yp = -1; yp <= 1; yp++){
+                                        var newX = x2 + xp;
+                                        var newY = y2 + yp;
+                                        if (newX >= 0 && newX < newBoard.length && newY >= 0 && newY < newBoard[x].length) {
+                                            f += newBoard[newX][newY] === -1;
+                                        }
+                                    }
+                                }
+                                //Failed
+                                if (f !== newBoard[x2][y2]) {
+                                    exit = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (exit) {
+                            break;
+                        }
+                    }
+                    if (!exit) {
+                        if (solved) {
+                            console.log("Brute force multiple solutions");
+                            solvedOn = null;
+                        } else {
+                            solvedOn = p.createVector(x, y);
+                            solvedOn.add(p.createVector(xStart, yStart));
+                        }
+                        solved = true;
+                        // break;
+                    }
+                    newBoard[x][y] = -2;
+                }
+               
+            }
+            if (solved) {
+                // break;
+            }
+        }
+        if (solvedOn !== null) {
+            flagSquare(getIndexFromPosition(solvedOn));
+        } else {
+            console.log("It didn't solve smh");
+        }
+        flagsLeftTime = 0.3;
+    }
     if (unfilledPositions.length !== 0 && n++ % (200 + add) === 0 && !oopsie) {
-        add = -199;  //Math.floor(Math.random() * 300 - 50);
+        add = Math.floor(Math.random() * 300 - 50);
         i++;
         i %= unfilledPositions.length;
         var c = unfilledPositions[i];

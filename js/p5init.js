@@ -20,9 +20,27 @@ const s = pi => {
         }
     }
     var i = 0;
+    var badLast = false;
     pi.draw = function () {
         p.background(0);
         // debugger;
+        if (p.keyIsPressed && p.key === 'y' && IS_SOLVING) {
+            for (var i = 0; i < buttons.length; i++){
+                var position = getPositionFromIndex(i);
+                if (userViewBoard[position.x][position.y] === -2) {
+                    buttons[i].msg = board[position.x][position.y];
+                }
+            }
+            badLast = true;
+        } else if (board !== undefined && board.length === BOARD_SIZE && badLast) {
+            badLast = false;
+            for (var i = 0; i < buttons.length; i++) {
+                var position = getPositionFromIndex(i);
+                if (userViewBoard[position.x][position.y] === -2) {
+                    buttons[i].msg = "";
+                }
+            }
+        }
         for (var i = 0; i < buttons.length; i++) {
             const btn = buttons[i];
             btn.draw();
@@ -33,6 +51,14 @@ const s = pi => {
             }
             else if (isDone && p.keyIsPressed && p.key === 'a') {
                 console.log(i, unfilledPositions.findIndex(e => getIndexFromPosition(e) === i));
+            }
+            else if (IS_SOLVING && isDone && p.keyIsPressed && p.key === 'f') {
+                var position = getPositionFromIndex(i);
+                if (board[position.x][position.y] === -1) {
+                    flagSquare(i);
+                } else {
+                    revealSquare(i);
+                }
             }
             else if(isDone && p.mouseButton === p.LEFT){
                 revealSquare(i);
@@ -46,12 +72,14 @@ const s = pi => {
             }
         }
         i++;
+        p.fill(255);
+        p.text(`flags left: ${flagsLeft}`, 104 * height, 98 * height);
         for (var i = 0; i < BOARD_SIZE; i++) {
-            p.fill(p.color(255));
-            p.text(i, 2.5 * height, (i * 100 / BOARD_SIZE + 1.5) * height);
-            if (i !== 0) {
-                p.text(i, (i * 100 / BOARD_SIZE + 2.5) * height, 1.5 * height);
-            }
+            // p.fill(p.color(255));
+            // p.text(i, 2.5 * height, (i * 100 / BOARD_SIZE + 1.5) * height);
+            // if (i !== 0) {
+            //     p.text(i, (i * 100 / BOARD_SIZE + 2.5) * height, 1.5 * height);
+            // }
         }
     };
 };
