@@ -1,6 +1,7 @@
 var board = undefined;
 var userViewBoard = undefined;
 var revealedSquares = {};
+var flagsLeft = 350;
 
 var getStr = function (v) {
     return v.x + ", " + v.y;
@@ -8,11 +9,14 @@ var getStr = function (v) {
 function generateBoard(baseIndex) {
     board = [];
     userViewBoard = [];
+    flagPlacers = [];
     for(var x = 0; x < BOARD_SIZE; x++){
         board.push([]);
+        flagPlacers.push([]);
         userViewBoard.push([]);
         for(var y = 0; y < BOARD_SIZE; y++){
             board[x].push(-2);
+            flagPlacers[x].push("");
             userViewBoard[x].push(-2);
         }
     }
@@ -51,7 +55,7 @@ function generateBoard(baseIndex) {
     }
     // console.log(currentPositions);
     // console.log(board);
-    for(var flags = 350; flags >= 0; flags--){
+    for(var flags = flagsLeft; flags >= 0; flags--){
         var pos;
         var allFilled = false;
         do {
@@ -114,17 +118,17 @@ function getIndexFromPosition(position) {
 }
 function setButtonAndUserView(el) {
     userViewBoard[el.x][el.y] = board[el.x][el.y];
-    if (board[el.x][el.y] === -1) {
-        console.log("that's an oopsie");
-        // debugger;
-        // throw "eggleflebb";
-    }
     if(board[el.x][el.y] === 0){
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].msg = "";
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].inner = p.color(150);
     } else {
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].msg = board[el.x][el.y];
         buttons[getIndexFromPosition(p.createVector(el.x, el.y))].inner = p.color(130);
+    }
+    if (board[el.x][el.y] === -1) {
+        console.log("that's an oopsie flagging");
+        // // debugger;
+        // throw "eggleflebb";
     }
 }
 function flagSquare(index) {
@@ -133,6 +137,8 @@ function flagSquare(index) {
     userViewBoard[position.x][position.y] = -1;
     buttons[index].msg = "F";
     buttons[index].inner = p.color(130);
+    flagPlacers[position.x][position.y] = DEBUG_index;
+    flagsLeft--;
 }
 function revealSurroundings(index, exceptions) {
     if (IS_SOLVING && (exceptions === undefined || exceptions === [])) {
@@ -147,7 +153,7 @@ function revealSurroundings(index, exceptions) {
             exceptions = [];
         }
         for (const adj of adjs) {
-            if (!revealedSquares[getStr(adj)] && exceptions.findIndex(e => getIndexFromPosition(e) === getIndexFromPosition(adj)) === -1) {
+            if (userViewBoard[adj.x][adj.y] === -2 && exceptions.findIndex(e => getIndexFromPosition(e) === getIndexFromPosition(adj)) === -1) {
                 revealSquare(getIndexFromPosition(adj));
             }
         }

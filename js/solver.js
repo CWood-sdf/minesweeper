@@ -1,7 +1,9 @@
 var fiftyFifties = [];
 var unfilledPositions = [];
 var checks = [];
+var flagPlacers = [];
 const IS_SOLVING = true;
+var fiftiesPlacedBy = [];
 //Compiles all the 50-50s into an object that has each position as an indexx
 function getFiftyFiftySquareObject() {
     var ret = [];
@@ -39,16 +41,29 @@ function getAllPotentialFiftyFifties(index) {
 //Returns the number of known flags in the surrounding squares (marked and 50-50s)
 function getSolvedFlagCount(index) {
     var possibleFifties = getAllPotentialFiftyFifties(index);
+    var DEBUG_fifties = possibleFifties.map(e => e.map(v => getPositionFromIndex(v)));
     if (fiftyFifties.length !== 0 && possibleFifties.length !== 0) {
         // debugger;
         // console.log('x');
     }
     var flags = 0;
+    var usedFiftySquares = [];
     for (var a of possibleFifties) {
-        if (fiftyFifties.findIndex(e => e[0] === a[0] && e[1] === a[1]) !== -1) {
+        if (fiftyFifties.findIndex(e => e[0] === a[0] && e[1] === a[1]) !== -1 && usedFiftySquares.indexOf(a[0]) === -1 && usedFiftySquares.indexOf(a[1]) === -1) {
+            usedFiftySquares.push(a[0], a[1]);
             flags++;
         }
     }
+    var adjs = getAllAdjacentPositions(getPositionFromIndex(index));
+    for (var adj of adjs) {
+        if (userViewBoard[adj.x][adj.y] === -1) {
+            flags++;
+        }
+    }
+    return flags;
+}
+function getActualFlagCount(index) {
+    var flags = 0;
     var adjs = getAllAdjacentPositions(getPositionFromIndex(index));
     for (var adj of adjs) {
         if (userViewBoard[adj.x][adj.y] === -1) {
@@ -110,6 +125,11 @@ function countAdjacentUnsolvedSquares(position) {
 }
 var msgDone = false;
 var add = Math.floor(Math.random() * 100 - 50);
+var oopsie = false;
+var sinceOopsie = 0;
+var oopsieIndex = 0;
+var DEBUG_index = 0;
+var flagsLeftMsg = false;
 function solveBoard() {
     // debugger;
     if (board === undefined || userViewBoard === undefined) {
@@ -121,12 +141,25 @@ function solveBoard() {
     if (userViewBoard === undefined) {
         return;
     }
-    if (unfilledPositions.length !== 0 && n++ % (200 + add) === 0) {
-        add = Math.floor(Math.random() * 300 - 50);
+    if (oopsie) {
+        sinceOopsie--;
+    }
+    if (sinceOopsie < 0) {
+        debugger;
+        getSolvedFlagCount(oopsieIndex);
+        getRevealExceptions();
+    }
+    if (flagsLeft < 10 && !flagsLeftMsg) {
+        console.log("yeet");
+        flagsLeftMsg = true;
+    }
+    if (unfilledPositions.length !== 0 && n++ % (200 + add) === 0 && !oopsie) {
+        add = -199;  //Math.floor(Math.random() * 300 - 50);
         i++;
         i %= unfilledPositions.length;
         var c = unfilledPositions[i];
         var index = getIndexFromPosition(c);
+        DEBUG_index = index;
         if (userViewBoard[c.x][c.y] === 0) {
             unfilledPositions.splice(unfilledPositions.findIndex(e => getIndexFromPosition(e) === index), 1);
             return;
@@ -148,17 +181,28 @@ function solveBoard() {
             try {
                 revealSurroundings(index, exceptions);
             } catch (e) {
-                // debugger;
-                // userViewBoard = userViewCopy;
-                // fiftyFifties = fiftyFiftyCopy;
-                // getRevealExceptions(index);
-                // getFreeAdjacentSquares(index);
-                // removeFiftiesOnSquare(adj);
-                // getSolvedFlagCount(index)
+                userViewBoard = userViewCopy;
+                fiftyFifties = fiftyFiftyCopy;
+                oopsieIndex = index;
+                sinceOopsie = 4800;
+                oopsie = true;
+                console.log("Surroudings");
+                console.log(userViewBoard[c.x][c.y], board[c.x][c.y], exceptions, getAllAdjacentPositions(c), getAdjacentSquareNumbers(index));
+                debugger;
+                // for (var j = 0; j < buttons.length; j++) {
+                //     var pp = getPositionFromIndex(j);
+                //     if (userViewBoard[pp.x][pp.y] === -2 && buttons[j].msg !== "-1") {
+                //         buttons[j].msg = "";
+                //     }
+                // }
+                // // getRevealExceptions(index);
+                // // getFreeAdjacentSquares(index);
+                // // removeFiftiesOnSquare(adj);
+                // getSolvedFlagCount(index);
             };
         }
         //If the number of untouched squares is the number of flags needed, flag remaining
-        else if (countFreeAdjacentSquares(index) === userViewBoard[c.x][c.y] - getSolvedFlagCount(index)) {
+        else if (countAdjacentUnsolvedSquares(getPositionFromIndex(index)) === userViewBoard[c.x][c.y] - getActualFlagCount(index)) {
             var adjacents = getFreeAdjacentSquares(index);
             var fiftyFiftyCopy = fiftyFifties.map(v => v);
             var userViewCopy = userViewBoard.map(v => v.map(e => e));
@@ -171,7 +215,8 @@ function solveBoard() {
             try {
                 revealSurroundings(index, exceptions);
             } catch (e) {
-                // debugger;
+                oopsie = true;
+                debugger;
                 // userViewBoard = userViewCopy;
                 // fiftyFifties = fiftyFiftyCopy;
                 // var adjacents = getFreeAdjacentSquares(index);
@@ -185,11 +230,12 @@ function solveBoard() {
                 // getSolvedFlagCount(index)
             };
         }
-        else if (countFreeAdjacentSquares(index) === 2 && userViewBoard[c.x][c.y] - getSolvedFlagCount(index) === 1) {
+        else if (countFreeAdjacentSquares(index) === 2 && userViewBoard[c.x][c.y] - getActualFlagCount(index) === 1) {
             //Generate 50-50
             var fifty = getFreeAdjacentSquares(index).map(v => getIndexFromPosition(v)).sort((a, b) => a - b);
             if (fiftyFifties.findIndex(v => v[0] === fifty[0] && v[1] === fifty[1]) === -1) {
                 fiftyFifties.push(fifty);
+                fiftiesPlacedBy.push([fifty, index]);
             }
         }
     }

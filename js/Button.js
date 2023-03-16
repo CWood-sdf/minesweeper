@@ -28,7 +28,10 @@
         }
         p.rect(this.x * height - 2, this.y * height, this.w * height + 4, this.h * height, 0);
         p.fill(255, 255, 255);
-        switch(this.msg * 1){
+        switch (this.msg * 1) {
+        case -1:
+            p.fill(100, 0, 255);
+            break;
         case 1:
             p.fill(0, 0, 0);
             break;
