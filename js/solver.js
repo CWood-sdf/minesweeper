@@ -123,6 +123,122 @@ function countAdjacentUnsolvedSquares(position) {
     }
     return ret;
 }
+function countAdjacentPartialUnsolvedSquares(position) {
+    var possibleFifties = getAllPotentialFiftyFifties(index);
+    var usedFiftySquares = [];
+    for (var a of possibleFifties) {
+        if (fiftyFifties.findIndex(e => e[0] === a[0] && e[1] === a[1]) !== -1 && usedFiftySquares.indexOf(a[0]) === -1 && usedFiftySquares.indexOf(a[1]) === -1) {
+            usedFiftySquares.push(a[0], a[1]);
+        }
+    }
+    var adjs = getAllAdjacentPositions(position);
+    var ret = 0;
+    for (var adj of adjs) {
+        if (userViewBoard[adj.x][adj.y] === -2 && usedFiftySquares.indexOf(getIndexFromPosition(adj)) === -1) {
+            ret++;
+        }
+    }
+    return ret;
+}
+//only returns false when a square is overloaded
+function boardIsGood(final) {
+    for (var x = 0; x < userViewBoard.length; x++){
+        for (var y = 0; y < userViewBoard[x].length; y++) {
+            var position = p.createVector(x, y);
+            if (userViewBoard[x][y] <= 0) {
+                continue;
+            }
+            var adjs = getAllAdjacentPositions(position);
+            var flags = 0;
+            for (let adj of adjs) {
+                flags += userViewBoard[adj.x][adj.y] === -1;
+            }
+            if (flags > userViewBoard[x][y]) {
+                return false;
+            }
+            if (final && flags != userViewBoard[x][y]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+function bruteForcePossible(flags, millis) {
+    if (flags === 0) {
+        return boardIsGood(true);
+    }
+    var empties = [];
+    for (var x = 0; x < userViewBoard.length; x++) {
+        for (var y = 0; y < userViewBoard[x].length; y++) {
+            if (userViewBoard[x][y] === -2) {
+                empties.push(p.createVector(x, y));
+            }
+        }
+    }
+    var indices = empties.map((v, i) => i);
+    var j = indices.length - 1;
+    while (j > 0) {
+        var other = Math.floor(Math.random() * (j + 1));
+        var temp = indices[j];
+        indices[j] = indices[other];
+        indices[other] = temp;
+        j--;
+    }
+    for (var i of indices){
+        //timeout
+        if (Date.now() - millis > 1000) {
+            return true;
+        }
+        var old = userViewBoard[empties[i].x][empties[i].y];
+        userViewBoard[empties[i].x][empties[i].y] = -1;
+        if (bruteForcePossible(flags - 1, millis)) {
+            userViewBoard[empties[i].x][empties[i].y] = old;
+            return true;
+        }
+        userViewBoard[empties[i].x][empties[i].y] = old;
+    }
+    return false;
+}
+function bruteForceSolve() {
+    var empties = [];
+    for (var x = 0; x < userViewBoard.length; x++) {
+        for (var y = 0; y < userViewBoard[x].length; y++) {
+            if (userViewBoard[x][y] === -2) {
+                empties.push(p.createVector(x, y));
+            }
+        }
+    }
+    var millis = Date.now();
+    console.log(`Brute forcing on ${empties.length} elements with depth ${flagsLeft}...`);
+    // debugger;
+    var indices = empties.map((v, i) => i);
+    var j = indices.length - 1;
+    while (j > 0) {
+        var other = Math.floor(Math.random() * (j + 1));
+        var temp = indices[j];
+        indices[j] = indices[other];
+        indices[other] = temp;
+        j--;
+    }
+    var time = 0;
+    for (var i of indices) {
+        if (Date.now() - millis > 1000) {
+            return;
+        }
+        var old = userViewBoard[empties[i].x][empties[i].y];
+        userViewBoard[empties[i].x][empties[i].y] = -1;
+        if (!boardIsGood() || !bruteForcePossible(flagsLeft - 1, millis)) {
+            userViewBoard[empties[i].x][empties[i].y] = old;
+            revealSquare(getIndexFromPosition(empties[i]));
+            console.log("Brute force find square " + empties[i]);
+            return;
+        } else {
+            userViewBoard[empties[i].x][empties[i].y] = old;
+        }
+        console.log((time + 1) / empties.length * 100 + "%");
+        time++;
+    }
+}
 var msgDone = false;
 var add = Math.floor(Math.random() * 100 - 50);
 var oopsie = false;
@@ -132,6 +248,9 @@ var DEBUG_index = 0;
 var flagsLeftMsg = false;
 var flagsLeftTime = 0.5;
 var msg50 = false;
+var lastBruteForce = 10000;
+var changed = true;
+var changedTime = 0;
 function solveBoard() {
     // debugger;
     if (board === undefined || userViewBoard === undefined) {
@@ -176,6 +295,15 @@ function solveBoard() {
         console.log("yeet");
         flagsLeftMsg = true;
     }
+    if (flagsLeft < 10) {
+        lastBruteForce--;
+    }
+    if (flagsLeft < 10 && flagsLeft > 1 && (lastBruteForce < 0 && changed || (changedTime++ > BOARD_SIZE*BOARD_SIZE*40))) {
+        bruteForceSolve();
+        lastBruteForce = BOARD_SIZE * BOARD_SIZE * 4 + 100;
+        changed = false;
+        changedTime = 0;
+    }
     if (flagsLeft === 1 && flagsLeftTime === 0.5 && flagsLeftTime !== 0.3) {
         console.log("Yeeting soon");
         flagsLeftTime = BOARD_SIZE * BOARD_SIZE * 10;
@@ -184,7 +312,7 @@ function solveBoard() {
         flagsLeftTime--;
     }
     if (flagsLeftTime < 0 && flagsLeft === 1) {
-        console.log("Brute force check");
+        console.log("yeet force check");
         // debugger;
         var xStart = BOARD_SIZE;
         var yStart = BOARD_SIZE;
@@ -261,7 +389,7 @@ function solveBoard() {
                     }
                     if (!exit) {
                         if (solved) {
-                            console.log("Brute force multiple solutions");
+                            console.log("yeet force multiple solutions");
                             solvedOn = null;
                         } else {
                             solvedOn = p.createVector(x, y);
@@ -311,6 +439,9 @@ function solveBoard() {
             var userViewCopy = userViewBoard.map(v => v.map(e => e));
             var exceptions = getRevealExceptions(index);
             try {
+                // if (!changed) {
+                //     changed = exceptions.length !== countAdjacentUnsolvedSquares().length;
+                // }
                 revealSurroundings(index, exceptions);
             } catch (e) {
                 userViewBoard = userViewCopy;
@@ -320,7 +451,7 @@ function solveBoard() {
                 oopsie = true;
                 console.log("Surroudings");
                 console.log(userViewBoard[c.x][c.y], board[c.x][c.y], exceptions, getAllAdjacentPositions(c), getAdjacentSquareNumbers(index));
-                debugger;
+                // debugger;
                 // for (var j = 0; j < buttons.length; j++) {
                 //     var pp = getPositionFromIndex(j);
                 //     if (userViewBoard[pp.x][pp.y] === -2 && buttons[j].msg !== "-1") {
@@ -334,13 +465,14 @@ function solveBoard() {
             };
         }
         //If the number of untouched squares is the number of flags needed, flag remaining
-        else if (countAdjacentUnsolvedSquares(getPositionFromIndex(index)) === userViewBoard[c.x][c.y] - getActualFlagCount(index)) {
+        else if (countAdjacentUnsolvedSquares(getPositionFromIndex(index)) === userViewBoard[c.x][c.y] - getSolvedFlagCount(index)) {
             var adjacents = getFreeAdjacentSquares(index);
             var fiftyFiftyCopy = fiftyFifties.map(v => v);
             var userViewCopy = userViewBoard.map(v => v.map(e => e));
             for (var adj of adjacents) {
                 //Need to remove 50-50 smh
                 flagSquare(getIndexFromPosition(adj));
+                changed = true;
                 removeFiftiesOnSquare(adj);
             }
             var exceptions = getRevealExceptions(index);
